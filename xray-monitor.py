@@ -77,28 +77,6 @@ def get_config_info():
     return xray["wx-key"], xray["bwg-id"], xray["bwg-key"]
 
 
-# if sys.version_info < (3, 7):
-#
-#     def get_process_output(cmd):
-#         process = subprocess.Popen(
-#             cmd,
-#             shell=True,
-#             stdout=subprocess.PIPE
-#         )
-#         process.wait()
-#         data, err = process.communicate()
-#
-#         if process.returncode is 0:
-#             return data.decode('utf-8')
-#         else:
-#             print("Error: ", err)
-#             return None
-#
-# elif sys.version_info >= (3, 7):
-#     print("Not compatiable for 3.7 or newer yet")
-#     exit(1)
-
-
 # get xray api result to output string
 def get_result_content(xray_result, server_result):
     if xray_result is None:
