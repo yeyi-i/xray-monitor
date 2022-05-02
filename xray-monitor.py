@@ -79,25 +79,66 @@ def get_config_info():
 
 # get xray api result to output string
 def get_result_content(xray_result, server_result):
+
+    # make the date of dict more pretty
+    def dict_pretty(_list):
+        _dict = {}
+
+        # looping all data from list
+        for item in _list:
+            
+            # when user is already in pretty dict, jump to next loop
+            if item['name'].split('>>>')[1] in _dict.keys():
+                continue
+
+            sub_dict = {}
+            sub_dict = sub_dict.copy() # making shadow copy of sub_dict, avoid data changed from the original sub_dict
+            
+            if item['name'].split('>>>')[3] == 'uplink':
+                if 'value' in item:
+                    sub_dict['uplink'] = handle_convert(item['value'])
+                else:
+                    sub_dict['uplink'] = handle_convert(0)
+            elif item['name'].split('>>>')[3] == 'downlink':
+                if 'value' in item:
+                    sub_dict['downlink'] = handle_convert(item['value'])
+                else:
+                    sub_dict['downlink'] = handle_convert(0)
+
+            # when first data is set, check if is uplink or downlink then start second for loop to find the opposite data type, then placed into sub_dict
+            if sub_dict.has_key('uplink'):
+                for downlink_item in _list:
+                    if item['name'].split('>>>')[1] == downlink_item['name'].split('>>>')[1] and downlink_item['name'].split('>>>')[3] == 'downlink':
+                        if 'value' in downlink_item:
+                            sub_dict['downlink'] = handle_convert(downlink_item['value'])
+                        else:
+                            sub_dict['downlink'] = handle_convert(0)
+            elif sub_dict.has_key('downlink'):
+                for uplink_item in _list:
+                    if item['name'].split('>>>')[1] == uplink_item['name'].split('>>>')[1] and uplink_item['name'].split('>>>')[3] == 'uplink':
+                        if 'value' in uplink_item:
+                            sub_dict['uplink'] = handle_convert(uplink_item['value'])
+                        else:
+                            sub_dict['uplink'] = handle_convert(0)
+
+            _dict[item['name'].split('>>>')[1]] = sub_dict     
+
+        return _dict
+
     if xray_result is None:
         logging.error("xray result in null")
         exit(1)
 
     content = "Current Date: " + str(time.strftime('%Y-%m-%d %H:%M', time.localtime())) + "\n" + server_result
-    for item in json.loads(xray_result)['stat']:
-        user = "User Name: " + item['name'].split('>>>')[1]
-        # print(item['name'].split('>>>')[1])
-        trafficType = "Traffic Type: " + item['name'].split('>>>')[3]
-        # print(item['name'].split('>>>')[3])
-        if 'value' in item:
-            # dataUsage = "Data Usage: " + str(round(item['value'] / (1024 * 1024 * 1024), 2)) + "GB"
-            # print(round(item['value'] / (1024 * 1024 * 1024), 2))
-            dataUsage = "Data Usage: " + handle_convert(item['value'])
-        else:
-            dataUsage = ""
+    _dict = dict_pretty(json.loads(xray_result)['stat'])
+
+    for item in _dict.keys():
+        user = "User: " + item
+        uplink = "Uplink: " + _dict[item]['uplink']
+        downlink = "Downlink: " + _dict[item]['downlink']
 
         content = content + str(
-            user + " \n" + trafficType + " \n" + dataUsage + "\n") + "----------------------------------------\n"
+            user + " \n" + uplink + " \n" + downlink + "\n") + "----------------------------------------\n"
     return content
 
 
